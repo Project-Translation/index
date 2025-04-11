@@ -22,7 +22,7 @@ class Configuration {
     this.apiBaseUrl = 'api.github.com';
     this.readmePath = path.join(__dirname, 'README.md');
     this.excludedRepos = ['index']; // Just exclude the index repo, not the organization
-    this.tableHeader = '| Project | Original Repository | Description | Stars |\n| --- | --- | --- | --- |';
+    this.tableHeader = '| Project | Original Repository | Description | Stars | Tags |\n| --- | --- | --- | --- | --- |';
     this.requestOptions = {
       headers: {
         'User-Agent': 'Project-Translation-Index-Generator',
@@ -54,8 +54,9 @@ const CONFIG = Configuration.getInstance();
 class RepositoryModel {
   /**
    * @param {Object} data - Repository data from GitHub API
+   * @param {Object|null} parentData - Parent repository data (optional)
    */
-  constructor(data) {
+  constructor(data, parentData = null) {
     this.name = data.name;
     this.fullName = data.full_name;
     this.url = data.html_url;
@@ -66,8 +67,9 @@ class RepositoryModel {
       fullName: data.parent.full_name,
       url: data.parent.html_url,
       owner: data.parent.owner.login,
-      description: data.parent.description || 'No description',
-      stars: data.parent.stargazers_count
+      description: parentData?.description || data.parent.description || 'No description',
+      stars: parentData?.stargazers_count ?? data.parent.stargazers_count ?? 0,
+      topics: parentData?.topics || []
     } : null;
     this.language = data.language;
     this.topics = data.topics || [];
@@ -118,13 +120,23 @@ class GitHubApiClient {
 
   /**
    * Gets detailed repository information including parent data for forks.
+   * Fetches parent repo details separately if it's a fork to get full data like topics.
    * @param {string} repoName - Repository name.
    * @returns {Promise<RepositoryModel>} - Repository model with detailed information.
    */
   static async getRepositoryDetails(repoName) {
     try {
-      const data = await this.fetchFromGitHub(`/repos/${CONFIG.organization}/${repoName}`);
-      return new RepositoryModel(data);
+      const repoData = await this.fetchFromGitHub(`/repos/${CONFIG.organization}/${repoName}`);
+      let parentData = null;
+      if (repoData.fork && repoData.parent) {
+        try {
+          console.log(`Fetching parent details for ${repoName}: ${repoData.parent.full_name}`);
+          parentData = await this.fetchFromGitHub(`/repos/${repoData.parent.full_name}`);
+        } catch (parentError) {
+          console.error(`Failed to fetch full parent details for ${repoData.parent.full_name}: ${parentError.message}`);
+        }
+      }
+      return new RepositoryModel(repoData, parentData);
     } catch (error) {
       console.error(`Failed to fetch details for ${repoName}: ${error.message}`);
       throw error;
@@ -157,63 +169,53 @@ class RepositoryService {
    */
   static filterRepositories(repositories) {
     return repositories.filter(repo => {
-      // Skip excluded repositories by name
       if (CONFIG.excludedRepos.includes(repo.name)) {
         return false;
       }
-      
-      // Keep only forks that have parent information
       return repo.isFork && repo.parent;
     });
   }
 
   /**
    * Formats repository data into table rows for the README.
+   * Sorts projects alphabetically and includes linked tags.
    * @param {RepositoryModel[]} repositories - Array of repository models.
    * @returns {string} - Formatted markdown table rows.
    */
   static formatRepositoriesTable(repositories) {
-    // Group repositories by their original source
     const projectGroups = new Map();
-    
     repositories.forEach(repo => {
-      if (!repo.parent) return; // Skip repos without parents
-      
+      if (!repo.parent) return;
       const projectKey = repo.parent.fullName;
-      
       if (!projectGroups.has(projectKey)) {
-        projectGroups.set(projectKey, {
-          parent: repo.parent,
-          translations: []
-        });
+        projectGroups.set(projectKey, repo);
       }
-      
-      projectGroups.get(projectKey).translations.push(repo);
     });
-    
-    // Format the table rows
+
+    const sortedRepos = Array.from(projectGroups.values()).sort((a, b) => {
+      return a.name.localeCompare(b.name);
+    });
+
     let tableContent = '';
-    
-    for (const [projectKey, group] of projectGroups.entries()) {
-      const parentRepo = group.parent;
-      const translation = group.translations[0]; // Get the translation repository
-      
-      // Use the translated repo name for the Project column
-      const translationRepoName = translation.name;
-      
-      // Format description to avoid table breaking due to line breaks
-      const description = parentRepo.description
-        .replace(/\r?\n/g, ' ')
-        .replace(/\|/g, '\\|');
-      
-      // Use the translation repo name and URL in the Project column
-      tableContent += `| [${translationRepoName}](${translation.url}) `;
+    sortedRepos.forEach(repo => {
+      const parentRepo = repo.parent;
+
+      const description = (parentRepo.description || 'No description')
+          .replace(/\|/g, '\\|')
+          .replace(/\r?\n/g, ' ');
+
+      const tags = (parentRepo.topics || [])
+          .map(topic => `[\`${topic}\`](https://github.com/topics/${topic})`)
+          .join(', ');
+
+      tableContent += `| [${repo.name}](${repo.url}) `;
       tableContent += `| [${parentRepo.fullName}](${parentRepo.url}) `;
       tableContent += `| ${description} `;
       tableContent += `| ${parentRepo.stars} `;
+      tableContent += `| ${tags || 'N/A'} `;
       tableContent += '|\n';
-    }
-    
+    });
+
     return tableContent;
   }
 }
@@ -230,16 +232,25 @@ class FileService {
   static updateReadme(tableContent) {
     try {
       const readmePath = CONFIG.readmePath;
-      const readmeContent = fs.readFileSync(readmePath, 'utf8');
-      
-      // Split the file content to get the header part
-      const headerMatch = readmeContent.match(/^([\s\S]*?)(?=\| Project)/m);
-      const header = headerMatch ? headerMatch[1].trim() : '# index\nIndex of translations.';
-      
-      // Build the new content with updated table format
-      const newContent = `${header}\n\n${CONFIG.tableHeader}\n${tableContent}`;
-      
-      fs.writeFileSync(readmePath, newContent);
+      let readmeContent = fs.readFileSync(readmePath, 'utf8');
+
+      const tableStartMarker = '<!-- TABLE_START -->';
+      const tableEndMarker = '<!-- TABLE_END -->';
+
+      const startIndex = readmeContent.indexOf(tableStartMarker);
+      const endIndex = readmeContent.indexOf(tableEndMarker);
+
+      if (startIndex === -1 || endIndex === -1 || startIndex >= endIndex) {
+        console.warn('Table markers not found in README.md, attempting fallback update.');
+        const headerMatch = readmeContent.match(/^([\s\S]*?)(?=\| Project)/m);
+        const header = headerMatch ? headerMatch[1].trim() : '# index\nIndex of translations.';
+        readmeContent = `${header}\n\n${CONFIG.tableHeader}\n${tableContent}`;
+      } else {
+        const newTableSection = `${tableStartMarker}\n${CONFIG.tableHeader}\n${tableContent}${tableEndMarker}`;
+        readmeContent = readmeContent.substring(0, startIndex) + newTableSection + readmeContent.substring(endIndex + tableEndMarker.length);
+      }
+
+      fs.writeFileSync(readmePath, readmeContent.trim() + '\n');
       console.log('README.md has been updated successfully');
     } catch (error) {
       console.error(`Failed to update README: ${error.message}`);
@@ -260,24 +271,19 @@ class AppController {
     try {
       console.log('Fetching repositories from the GitHub API...');
       
-      // Get all repositories from the organization
       const repos = await GitHubApiClient.getOrganizationRepositories();
       console.log(`Found ${repos.length} repositories`);
       
-      // Get detailed information for each repository
       const repoDetailsPromises = repos.map(repo => 
         GitHubApiClient.getRepositoryDetails(repo.name));
       
       const repoDetails = await Promise.all(repoDetailsPromises);
       
-      // Filter repositories based on criteria
       const filteredRepos = RepositoryService.filterRepositories(repoDetails);
       console.log(`Filtered to ${filteredRepos.length} repositories`);
       
-      // Format the repositories into a table
       const tableContent = RepositoryService.formatRepositoriesTable(filteredRepos);
       
-      // Update the README.md file
       FileService.updateReadme(tableContent);
       
     } catch (error) {

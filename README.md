@@ -1,13 +1,19 @@
 # index
-Index of translations.
+Index of translations maintained by the [Project-Translation](https://github.com/Project-Translation) organization.
 
-| Project | Original Repository | Description | Stars |
-| --- | --- | --- | --- |
-| [cursor-docs](https://github.com/Project-Translation/cursor-docs) | [getcursor/docs](https://github.com/getcursor/docs) | Cursor's Open Source Documentation | 309 |
-| [vscode-docs](https://github.com/Project-Translation/vscode-docs) | [microsoft/vscode-docs](https://github.com/microsoft/vscode-docs) | Public documentation for Visual Studio Code | 5914 |
-| [golang-website](https://github.com/Project-Translation/golang-website) | [golang/website](https://github.com/golang/website) | [mirror] Home of the go.dev and golang.org websites | 402 |
-| [algorithm-visualizer](https://github.com/Project-Translation/algorithm-visualizer) | [algorithm-visualizer/algorithm-visualizer](https://github.com/algorithm-visualizer/algorithm-visualizer) | :fireworks:Interactive Online Platform that Visualizes Algorithms from Code | 47300 |
-| [algorithms](https://github.com/Project-Translation/algorithms) | [algorithm-visualizer/algorithms](https://github.com/algorithm-visualizer/algorithms) | :crystal_ball:Algorithm Visualizations | 401 |
-| [gobyexample](https://github.com/Project-Translation/gobyexample) | [mmcgrana/gobyexample](https://github.com/mmcgrana/gobyexample) | Go by Example | 7523 |
-| [cline-docs](https://github.com/Project-Translation/cline-docs) | [cline/cline](https://github.com/cline/cline) | Autonomous coding agent right in your IDE, capable of creating/editing files, executing commands, using the browser, and more with your permission every step of the way. | 39535 |
-| [styleguide](https://github.com/Project-Translation/styleguide) | [google/styleguide](https://github.com/google/styleguide) | Style guides for Google-originated open-source projects | 38055 |
+Want to see another project translated? Please [open an issue](https://github.com/Project-Translation/index/issues) to suggest a new repository!
+
+<!-- TABLE_START -->
+| Project | Original Repository | Description | Stars | Tags |
+| --- | --- | --- | --- | --- |
+| [algorithm-visualizer](https://github.com/Project-Translation/algorithm-visualizer) | [algorithm-visualizer/algorithm-visualizer](https://github.com/algorithm-visualizer/algorithm-visualizer) | :fireworks:Interactive Online Platform that Visualizes Algorithms from Code | 47301 | [`algorithm`](https://github.com/topics/algorithm), [`animation`](https://github.com/topics/animation), [`data-structure`](https://github.com/topics/data-structure), [`visualization`](https://github.com/topics/visualization) |
+| [algorithms](https://github.com/Project-Translation/algorithms) | [algorithm-visualizer/algorithms](https://github.com/algorithm-visualizer/algorithms) | :crystal_ball:Algorithm Visualizations | 401 | N/A |
+| [cline-docs](https://github.com/Project-Translation/cline-docs) | [cline/cline](https://github.com/cline/cline) | Autonomous coding agent right in your IDE, capable of creating/editing files, executing commands, using the browser, and more with your permission every step of the way. | 39572 | N/A |
+| [cursor-docs](https://github.com/Project-Translation/cursor-docs) | [getcursor/docs](https://github.com/getcursor/docs) | Cursor's Open Source Documentation | 309 | N/A |
+| [gobyexample](https://github.com/Project-Translation/gobyexample) | [mmcgrana/gobyexample](https://github.com/mmcgrana/gobyexample) | Go by Example | 7523 | N/A |
+| [golang-website](https://github.com/Project-Translation/golang-website) | [golang/website](https://github.com/golang/website) | [mirror] Home of the go.dev and golang.org websites | 402 | N/A |
+| [reference-en-us](https://github.com/Project-Translation/reference-en-us) | [Fechin/reference](https://github.com/Fechin/reference) | ⭕ Share quick reference cheat sheet for developers. | 7808 | [`awk`](https://github.com/topics/awk), [`bash`](https://github.com/topics/bash), [`chatgpt`](https://github.com/topics/chatgpt), [`cheatsheet`](https://github.com/topics/cheatsheet), [`cheatsheets`](https://github.com/topics/cheatsheets), [`css`](https://github.com/topics/css), [`golang`](https://github.com/topics/golang), [`grep`](https://github.com/topics/grep), [`markdown`](https://github.com/topics/markdown), [`python`](https://github.com/topics/python), [`reference`](https://github.com/topics/reference), [`sed`](https://github.com/topics/sed), [`snippets`](https://github.com/topics/snippets), [`vim`](https://github.com/topics/vim) |
+| [reference-zh-cn](https://github.com/Project-Translation/reference-zh-cn) | [jaywcjlove/reference](https://github.com/jaywcjlove/reference) | 为开发人员分享快速参考备忘清单(速查表) | 13447 | [`cheatsheet`](https://github.com/topics/cheatsheet), [`docker`](https://github.com/topics/docker), [`javascript`](https://github.com/topics/javascript), [`npm`](https://github.com/topics/npm), [`npm-package`](https://github.com/topics/npm-package), [`react`](https://github.com/topics/react), [`reactjs`](https://github.com/topics/reactjs), [`references`](https://github.com/topics/references), [`semver`](https://github.com/topics/semver), [`toml`](https://github.com/topics/toml), [`typescript`](https://github.com/topics/typescript), [`vue3`](https://github.com/topics/vue3), [`vuejs`](https://github.com/topics/vuejs) |
+| [styleguide](https://github.com/Project-Translation/styleguide) | [google/styleguide](https://github.com/google/styleguide) | Style guides for Google-originated open-source projects | 38055 | [`cpplint`](https://github.com/topics/cpplint), [`style-guide`](https://github.com/topics/style-guide), [`styleguide`](https://github.com/topics/styleguide) |
+| [vscode-docs](https://github.com/Project-Translation/vscode-docs) | [microsoft/vscode-docs](https://github.com/microsoft/vscode-docs) | Public documentation for Visual Studio Code | 5914 | [`vscode`](https://github.com/topics/vscode) |
+<!-- TABLE_END -->
