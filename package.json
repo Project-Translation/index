@@ -1,0 +1,19 @@
+{
+  "name": "project-translator-index",
+  "version": "1.0.0",
+  "description": "Tool to generate index of Project-Translation repositories",
+  "main": "update-index.js",
+  "scripts": {
+    "update": "node update-index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3"
+  },
+  "keywords": [
+    "github",
+    "translation",
+    "index"
+  ],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,35 @@
+# .github/workflows/update-readme.yml
+name: Update README Index
+
+on:
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  update_index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Specify your Node.js version
+
+      - name: Run update script
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+        run: node update-index.js
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add README.md
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Update README index"
+            git push
+          fi
