@@ -16,6 +16,9 @@ jobs:
         with:
           node-version: '20' # Specify your Node.js version
 
+      - name: Install dependencies
+        run: npm install # Add this step
+
       - name: Run update script
         env:
           API_KEY: ${{ secrets.API_KEY }}
