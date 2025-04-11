@@ -25,6 +25,8 @@ jobs:
         run: node update-index.js
 
       - name: Commit and push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Add GITHUB_TOKEN to env
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -34,5 +36,6 @@ jobs:
             echo "No changes to commit."
           else
             git commit -m "Update README index"
-            git push
+            # Explicitly use the token for pushing
+            git push https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git HEAD:${GITHUB_REF#refs/heads/}
           fi
