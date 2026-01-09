@@ -22,7 +22,7 @@ class Configuration {
     this.apiBaseUrl = 'api.github.com';
     this.readmePath = path.join(__dirname, 'README.md');
     this.excludedRepos = ['index']; // Just exclude the index repo, not the organization
-    this.tableHeader = '| Project | Original Repository | Description | Stars | Tags |\n| --- | --- | --- | --- | --- |';
+    this.tableHeader = '| Project | Original Repository | Description | Stars | Tags | Status |\n| --- | --- | --- | --- | --- | --- |';
     this.requestOptions = {
       headers: {
         'User-Agent': 'Project-Translation-Index-Generator',
@@ -74,6 +74,7 @@ class RepositoryModel {
     this.language = data.language;
     this.topics = data.topics || [];
     this.owner = data.owner.login;
+    this.isTranslated = false; // Will be set by checking .translation-cache directory
   }
 }
 
@@ -144,6 +145,34 @@ class GitHubApiClient {
   }
 
   /**
+   * Checks if .translation-cache directory exists in the repository
+   * @param {string} repoName - Repository name
+   * @returns {Promise<boolean>} True if .translation-cache exists, false otherwise
+   */
+  static async checkTranslationCache(repoName) {
+    try {
+      // Get repository info to find the default branch
+      const repoInfo = await this.fetchFromGitHub(`/repos/${CONFIG.organization}/${repoName}`);
+      const defaultBranch = repoInfo.default_branch || 'main';
+      
+      // Check for .translation-cache directory in the default branch
+      const contents = await this.fetchFromGitHub(`/repos/${CONFIG.organization}/${repoName}/contents/.translation-cache?ref=${defaultBranch}`);
+      
+      // Check if it's a directory (GitHub API returns array for directories)
+      const isDirectory = Array.isArray(contents) || (contents && contents.type === 'dir');
+      
+      return isDirectory;
+    } catch (error) {
+      // 404 means directory doesn't exist
+      if (error.message.includes('404') || error.message.includes('Not Found')) {
+        return false;
+      }
+      console.error(`Error checking .translation-cache for ${repoName}: ${error.message}`);
+      return false;
+    }
+  }
+
+  /**
    * Gets all repositories from the organization
    * @returns {Promise<Array>} Array of repositories
    */
@@ -208,11 +237,16 @@ class RepositoryService {
           .map(topic => `[\`${topic}\`](https://github.com/topics/${topic})`)
           .join(', ');
 
+      const statusBadge = repo.isTranslated
+        ? '✅ Translated'
+        : '❌ Not Translated';
+
       tableContent += `| [${repo.name}](${repo.url}) `;
       tableContent += `| [${parentRepo.fullName}](${parentRepo.url}) `;
       tableContent += `| ${description} `;
       tableContent += `| ${parentRepo.stars} `;
       tableContent += `| ${tags || 'N/A'} `;
+      tableContent += `| ${statusBadge} `;
       tableContent += '|\n';
     });
 
@@ -274,10 +308,17 @@ class AppController {
       const repos = await GitHubApiClient.getOrganizationRepositories();
       console.log(`Found ${repos.length} repositories`);
       
-      const repoDetailsPromises = repos.map(repo => 
+      const repoDetailsPromises = repos.map(repo =>
         GitHubApiClient.getRepositoryDetails(repo.name));
       
       const repoDetails = await Promise.all(repoDetailsPromises);
+      
+      // Check .translation-cache directory for each repository
+      console.log('Checking translation status for each repository...');
+      for (const repo of repoDetails) {
+        repo.isTranslated = await GitHubApiClient.checkTranslationCache(repo.name);
+        console.log(`  ${repo.name}: ${repo.isTranslated ? 'Translated' : 'Not translated'}`);
+      }
       
       const filteredRepos = RepositoryService.filterRepositories(repoDetails);
       console.log(`Filtered to ${filteredRepos.length} repositories`);

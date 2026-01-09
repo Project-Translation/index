@@ -3,6 +3,9 @@ name: Update README Index
 
 on:
   workflow_dispatch: # Allows manual triggering
+  schedule:
+    # 每周五中午12点运行（北京时间，UTC+8，对应UTC时间凌晨4点）
+    - cron: '0 4 * * 5'
 
 jobs:
   update_index:
